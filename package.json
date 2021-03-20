@@ -20,7 +20,8 @@
   },
   "scripts": {
     "postinstall": "shx ls index.js >> /dev/null 2>&1 || npm run build",
-    "clean": "shx rm -f *.d.ts *.js *.js.map *.d.ts.map",
+    "clean": "shx rm -f *.d.ts *.js *.js.map *.d.ts.map *.tgz",
+    "test": "npm run build && node test/test.js",
     "build": "tsc -d",
     "prepack": "npm run clean && npm run build"
   },

@@ -1,7 +1,7 @@
 import { parseHTML } from 'linkedom'
 import { asyncIterableToStream } from 'whatwg-stream-to-async-iter';
+import { PushMap } from './push-maps.js';
 import {
-  PushMap,
   ParsedHTMLRewriterElement,
   ParsedHTMLRewriterText,
   ParsedHTMLRewriterComment,
@@ -10,7 +10,6 @@ import {
   Awaitable,
 } from './support.js';
 
-const NODE_END = -1;
 const ELEMENT_NODE = 1;
 const ATTRIBUTE_NODE = 2;
 const TEXT_NODE = 3;
@@ -29,13 +28,13 @@ const isComment = (n?: Node | null): n is Comment => n?.nodeType === COMMENT_NOD
 
 function* findTextNodes(el: Element, document: any): Iterable<Text> {
   const tw = document.createTreeWalker(el, SHOW_TEXT);
-  for (const node of treeWalkerToIter(tw)) 
+  for (const node of treeWalkerToIter(tw))
     yield node as Text;
 }
 
 function* findCommentNodes(el: Element, document: any): Iterable<Comment> {
   const tw = document.createTreeWalker(el, SHOW_COMMENT);
-  for (const node of treeWalkerToIter(tw)) 
+  for (const node of treeWalkerToIter(tw))
     yield node as Comment;
 }
 
@@ -70,7 +69,7 @@ export class ParsedHTMLRewriter implements HTMLRewriter {
     return this;
   }
 
-  public onDocument(handlers: DocumentHandler): HTMLRewriter {
+  public onDocument(_handlers: DocumentHandler): HTMLRewriter {
     // this.#onDocument.push(handlers);
     // return this;
     throw Error('Method not implemented.');
@@ -124,7 +123,7 @@ export class ParsedHTMLRewriter implements HTMLRewriter {
 
       // We'll then walk the DOM and run the registered handlers each time we encounter an "interesting" node.
       // Because we've stored them in a hash map, and can retrieve them via object identity, this is now O(n)...
-      const walker = document.createTreeWalker(document.documentElement, SHOW_ELEMENT + SHOW_TEXT + SHOW_COMMENT);
+      const walker = document.createTreeWalker(document, SHOW_ELEMENT | SHOW_TEXT | SHOW_COMMENT);
 
       // We need to walk the entire tree ahead of time,
       // otherwise we'll miss elements that have been deleted by handlers.

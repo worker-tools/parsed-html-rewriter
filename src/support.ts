@@ -1,13 +1,6 @@
-export type Awaitable<T> = T | Promise<T>;
+import { enumerable } from "./enumerable.js";
 
-/** A map implementation that supports multiple values per key (as array) */
-export class PushMap<K, V> extends Map<K, V[]> {
-  push(k: K, v: V) {
-    const list = this.get(k) ?? [];
-    list.push(v);
-    this.set(k, list);
-  }
-}
+export type Awaitable<T> = T | Promise<T>;
 
 export async function* promiseToAsyncIterable<T>(promise: Promise<T>): AsyncIterableIterator<T> {
   yield await promise;
@@ -21,12 +14,6 @@ export function* treeWalkerToIter(walker: TreeWalker): IterableIterator<Node> {
   }
 }
 
-function enumerable(value: boolean = true) {
-  return (_: any, __: string, descriptor: PropertyDescriptor) => {
-    descriptor.enumerable = value;
-  };
-}
-
 type Content = string;
 
 /** Fragment form string function that works with linkedom. */
@@ -36,7 +23,8 @@ function fragmentFromString(document: HTMLDocument, html: string) {
   return temp.content;
 }
 
-export abstract class ParsedHTMLRewriterNode {
+@enumerable
+export class ParsedHTMLRewriterNode {
   #node: Element | Text | Comment | null;
   #doc: HTMLDocument;
   constructor(node: Element | Text | Comment | null, document: HTMLDocument) {
@@ -44,7 +32,7 @@ export abstract class ParsedHTMLRewriterNode {
     this.#doc = document;
   }
 
-  @enumerable() get removed() { return !this.#doc.contains(this.#node) }
+  @enumerable get removed() { return !this.#doc.contains(this.#node) }
 
   #replace = (node: Element | Text | Comment | null, content: string, opts?: ContentOptions) => {
     node?.replaceWith(...opts?.html
@@ -77,20 +65,23 @@ export abstract class ParsedHTMLRewriterNode {
   }
 }
 
+@enumerable
 export class ParsedHTMLRewriterElement extends ParsedHTMLRewriterNode {
   #node: Element;
-  #attributes: [string, string][];
+
   constructor(node: Element, document: HTMLDocument) {
     super(node, document)
     this.#node = node;
-    this.#attributes = node.getAttributeNames().map(k => [k, node.getAttribute(k)] as [string, string]);
   }
-  @enumerable() get tagName() { return this.#node.tagName.toLowerCase() }
-  @enumerable() get attributes() { return [...this.#attributes] }
-  @enumerable() get namespaceURI() { return this.#node.namespaceURI } 
+
+  @enumerable get tagName() { return this.#node.tagName.toLowerCase() }
+  @enumerable get attributes(): Iterable<[string, string]> {
+    return [...this.#node.attributes].map(attr => [attr.name, attr.value]);
+  }
+  @enumerable get namespaceURI() { return this.#node.namespaceURI }
 
   getAttribute(name: string) {
-    return this.#node.getAttribute(name); 
+    return this.#node.getAttribute(name);
   }
 
   hasAttribute(name: string) {
@@ -98,16 +89,16 @@ export class ParsedHTMLRewriterElement extends ParsedHTMLRewriterNode {
   }
 
   setAttribute(name: string, value: string): this {
-    this.#node.setAttribute(name, value); 
-    return this; 
+    this.#node.setAttribute(name, value);
+    return this;
   }
 
   removeAttribute(name: string): this {
-    this.#node.removeAttribute(name); 
-    return this; 
+    this.#node.removeAttribute(name);
+    return this;
   }
 
-  prepend(content: Content, opts?: ContentOptions):this {
+  prepend(content: Content, opts?: ContentOptions): this {
     return this.before(content, opts);
   }
 
@@ -126,6 +117,7 @@ export class ParsedHTMLRewriterElement extends ParsedHTMLRewriterNode {
   }
 }
 
+@enumerable
 export class ParsedHTMLRewriterText extends ParsedHTMLRewriterNode {
   #text: Text | null;
   #done: boolean;
@@ -135,17 +127,18 @@ export class ParsedHTMLRewriterText extends ParsedHTMLRewriterNode {
     this.#text = text;
     this.#done = text === null;
   }
-  @enumerable() get text() { return this.#text?.textContent ?? '' }
-  @enumerable() get lastInTextNode() { return this.#done }
+  @enumerable get text() { return this.#text?.textContent ?? '' }
+  @enumerable get lastInTextNode() { return this.#done }
 }
 
+@enumerable
 export class ParsedHTMLRewriterComment extends ParsedHTMLRewriterNode {
   #comm: Comment;
   constructor(comm: Comment, document: HTMLDocument) {
     super(comm, document);
     this.#comm = comm;
   }
-  @enumerable() get text() { return this.#comm?.nodeValue ?? '' }
+  @enumerable get text() { return this.#comm?.nodeValue ?? '' }
 }
 
 // function* ancestors(el: Node) {
