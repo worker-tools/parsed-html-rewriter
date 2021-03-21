@@ -1,6 +1,6 @@
 import { parseHTML } from 'linkedom'
 import { asyncIterableToStream } from 'whatwg-stream-to-async-iter';
-import { PushMap } from './push-maps.js';
+import { push } from './push-maps.js';
 import {
   ParsedHTMLRewriterElement,
   ParsedHTMLRewriterText,
@@ -61,11 +61,11 @@ export type ParsedElementHandler = ElementHandler & {
  * - A HTMLRewriter implementation using `lol-html` compiled to WebAssembly..
  */
 export class ParsedHTMLRewriter implements HTMLRewriter {
-  #onMap = new PushMap<string, ParsedElementHandler>();
+  #onMap = new Map<string, ParsedElementHandler[]>();
   // #onDocument = new Array<DocumentHandler>();
 
   public on(selector: string, handlers: ParsedElementHandler): HTMLRewriter {
-    this.#onMap.push(selector, handlers);
+    push(this.#onMap, selector, handlers);
     return this;
   }
 
@@ -89,32 +89,32 @@ export class ParsedHTMLRewriter implements HTMLRewriter {
       // After that, the hardest part is getting the order right.
       // First, we'll build a map of all elements that are "interesting", based on the registered handlers.
       // We take advantage of existing DOM APIs:
-      const elemMap = new PushMap<Element, (el: Element) => Awaitable<void>>();
-      const htmlMap = new PushMap<Element, (html: string) => Awaitable<void>>();
-      const textMap = new PushMap<Text, (text: Text) => Awaitable<void>>();
-      const commMap = new PushMap<Comment, (comment: Comment) => Awaitable<void>>();
+      const elemMap = new Map<Element, ((el: Element) => Awaitable<void>)[]>();
+      const htmlMap = new Map<Element, ((html: string) => Awaitable<void>)[]>();
+      const textMap = new Map<Text, ((text: Text) => Awaitable<void>)[]>();
+      const commMap = new Map<Comment, ((comment: Comment) => Awaitable<void>)[]>();
 
       for (const [selector, handlers] of this.#onMap) {
         for (const elem of document.querySelectorAll(selector)) {
           for (const handler of handlers) {
             if (handler.element) {
-              elemMap.push(elem, handler.element.bind(handler));
+              push(elemMap, elem, handler.element.bind(handler));
             }
 
             if (handler.innerHTML) {
-              htmlMap.push(elem, handler.innerHTML.bind(handler));
+              push(htmlMap, elem, handler.innerHTML.bind(handler));
             }
 
             // Non-element handlers are odd, in the sense that they run for _any_ children
             if (handler.text) {
               for (const text of findTextNodes(elem, document)) {
-                textMap.push(text, handler.text.bind(handler))
+                push(textMap, text, handler.text.bind(handler))
               }
             }
 
             if (handler.comments) {
               for (const comm of findCommentNodes(elem, document)) {
-                commMap.push(comm, handler.comments.bind(handler))
+                push(commMap, comm, handler.comments.bind(handler))
               }
             }
           }

@@ -1,16 +1,7 @@
-/** A map implementation that supports multiple values per key (as array) */
-export class PushMap<K, V> extends Map<K, V[]> {
-  push(k: K, v: V) {
-    const vs = this.get(k) ?? [];
-    vs.push(v);
-    this.set(k, vs);
-  }
-}
-
-export class PushWeakMap<O extends object, V> extends WeakMap<O, V[]> {
-  push(o: O, v: V) {
-    const vs = this.get(o) ?? [];
-    vs.push(v);
-    this.set(o, vs);
-  }
+export function push<K, V>(m: Map<K, V[]>, k: K, v: V): typeof m;
+export function push<K extends object, V>(m: WeakMap<K, V[]>, k: K, v: V): typeof m;
+export function push<K, V>(m: any, k: K, v: V) {
+  const vs = m.get(k) ?? [];
+  vs.push(v);
+  return m.set(k, vs);
 }
