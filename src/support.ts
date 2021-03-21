@@ -138,7 +138,8 @@ export class ParsedHTMLRewriterComment extends ParsedHTMLRewriterNode {
     super(comm, document);
     this.#comm = comm;
   }
-  @enumerable get text() { return this.#comm?.nodeValue ?? '' }
+  @enumerable get text() { return this.#comm.textContent ?? '' }
+  set text(value: string) { this.#comm.textContent = value }
 }
 
 // function* ancestors(el: Node) {

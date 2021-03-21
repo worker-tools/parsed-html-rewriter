@@ -20,6 +20,8 @@ export function enumerable(obj: any, property?: string, descriptor?: PropertyDes
   }
 }
 
+// https://stackoverflow.com/questions/34517538/setting-an-es6-class-getter-to-enumerable
+
 // function* prototypes(obj: any) {
 //   let prototype = Object.getPrototypeOf(obj);
 //   while (prototype && prototype !== Object.prototype) {

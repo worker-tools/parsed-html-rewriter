@@ -1,7 +1,7 @@
 {
   "name": "@worker-tools/parsed-html-rewriter",
   "version": "0.0.0",
-  "description": "A DOM-based implementation of [Cloudflare Worker's `HTMLRewriter`](https://developers.cloudflare.com/workers/runtime-apis/html-rewriter).",
+  "description": "A DOM-based implementation of Cloudflare Worker's HTMLRewriter.",
   "type": "module",
   "main": "index.js",
   "module": "index.js",
