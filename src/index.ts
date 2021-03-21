@@ -90,7 +90,7 @@ export class ParsedHTMLRewriter implements HTMLRewriter {
       // First, we'll build a map of all elements that are "interesting", based on the registered handlers.
       // We take advantage of existing DOM APIs:
       const elemMap = new Map<Element, ((el: Element) => Awaitable<void>)[]>();
-      const htmlMap = new Map<Element, ((html: string) => Awaitable<void>)[]>();
+      const htmlMap = new Map<Node, [Element, ((html: string) => Awaitable<void>)][]>();
       const textMap = new Map<Text, ((text: Text) => Awaitable<void>)[]>();
       const commMap = new Map<Comment, ((comment: Comment) => Awaitable<void>)[]>();
 
@@ -101,10 +101,10 @@ export class ParsedHTMLRewriter implements HTMLRewriter {
               append(elemMap, elem, handler.element.bind(handler));
             }
 
-            // FIXME: The `innerHTML` handler needs to run at the beginning of the next sibling node,
+            // The `innerHTML` handler needs to run at the beginning of the next sibling node,
             // after all the inner handlers have completed...
             if (handler.innerHTML) {
-              append(htmlMap, elem, handler.innerHTML.bind(handler));
+              append(htmlMap, findNext(elem), [elem, handler.innerHTML.bind(handler)]);
             }
 
             // Non-element handlers are odd, in the sense that they run for _any_ children
@@ -132,13 +132,13 @@ export class ParsedHTMLRewriter implements HTMLRewriter {
       const nodes = [...treeWalkerToIter(walker)];
 
       for (const node of nodes) {
+        for (const [originalElement, handler] of htmlMap.get(node) ?? []) {
+          await handler(originalElement.innerHTML);
+        }
         if (isElement(node)) {
           const handlers = elemMap.get(node) ?? [];
           for (const handler of handlers) {
             await handler(new ParsedHTMLRewriterElement(node, document) as unknown as Element);
-          }
-          for (const handler of htmlMap.get(node) ?? []) {
-            await handler(node.innerHTML);
           }
         }
         else if (isText(node)) {
@@ -163,4 +163,9 @@ export class ParsedHTMLRewriter implements HTMLRewriter {
       return new TextEncoder().encode(document.toString());
     })())), response);
   }
+}
+
+function findNext(el: Node | null): Node | null {
+  while (el && !el.nextSibling) el = el.parentNode;
+  return el && el.nextSibling;
 }
