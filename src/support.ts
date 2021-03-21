@@ -1,6 +1,10 @@
-import { enumerable } from "./enumerable.js";
-
 export type Awaitable<T> = T | Promise<T>;
+
+export function append<K, V>(m: Map<K, V[]>, k: K, v: V) {
+  const vs = m.get(k) ?? [];
+  vs.push(v);
+  return m.set(k, vs);
+}
 
 export async function* promiseToAsyncIterable<T>(promise: Promise<T>): AsyncIterableIterator<T> {
   yield await promise;
@@ -23,7 +27,6 @@ function fragmentFromString(document: HTMLDocument, html: string) {
   return temp.content;
 }
 
-@enumerable
 export class ParsedHTMLRewriterNode {
   #node: Element | Text | Comment | null;
   #doc: HTMLDocument;
@@ -32,7 +35,7 @@ export class ParsedHTMLRewriterNode {
     this.#doc = document;
   }
 
-  @enumerable get removed() { return !this.#doc.contains(this.#node) }
+  get removed() { return !this.#doc.contains(this.#node) }
 
   #replace = (node: Element | Text | Comment | null, content: string, opts?: ContentOptions) => {
     node?.replaceWith(...opts?.html
@@ -65,7 +68,6 @@ export class ParsedHTMLRewriterNode {
   }
 }
 
-@enumerable
 export class ParsedHTMLRewriterElement extends ParsedHTMLRewriterNode {
   #node: Element;
 
@@ -74,11 +76,11 @@ export class ParsedHTMLRewriterElement extends ParsedHTMLRewriterNode {
     this.#node = node;
   }
 
-  @enumerable get tagName() { return this.#node.tagName.toLowerCase() }
-  @enumerable get attributes(): Iterable<[string, string]> {
+  get tagName() { return this.#node.tagName.toLowerCase() }
+  get attributes(): Iterable<[string, string]> {
     return [...this.#node.attributes].map(attr => [attr.name, attr.value]);
   }
-  @enumerable get namespaceURI() { return this.#node.namespaceURI }
+  get namespaceURI() { return this.#node.namespaceURI }
 
   getAttribute(name: string) {
     return this.#node.getAttribute(name);
@@ -117,7 +119,6 @@ export class ParsedHTMLRewriterElement extends ParsedHTMLRewriterNode {
   }
 }
 
-@enumerable
 export class ParsedHTMLRewriterText extends ParsedHTMLRewriterNode {
   #text: Text | null;
   #done: boolean;
@@ -127,18 +128,17 @@ export class ParsedHTMLRewriterText extends ParsedHTMLRewriterNode {
     this.#text = text;
     this.#done = text === null;
   }
-  @enumerable get text() { return this.#text?.textContent ?? '' }
-  @enumerable get lastInTextNode() { return this.#done }
+  get text() { return this.#text?.textContent ?? '' }
+  get lastInTextNode() { return this.#done }
 }
 
-@enumerable
 export class ParsedHTMLRewriterComment extends ParsedHTMLRewriterNode {
   #comm: Comment;
   constructor(comm: Comment, document: HTMLDocument) {
     super(comm, document);
     this.#comm = comm;
   }
-  @enumerable get text() { return this.#comm.textContent ?? '' }
+  get text() { return this.#comm.textContent ?? '' }
   set text(value: string) { this.#comm.textContent = value }
 }
 

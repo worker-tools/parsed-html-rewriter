@@ -1,11 +1,11 @@
 import { parseHTML } from 'linkedom'
 import { asyncIterableToStream } from 'whatwg-stream-to-async-iter';
-import { push } from './push-maps.js';
 import {
   ParsedHTMLRewriterElement,
   ParsedHTMLRewriterText,
   ParsedHTMLRewriterComment,
   promiseToAsyncIterable,
+  append,
   treeWalkerToIter,
   Awaitable,
 } from './support.js';
@@ -65,7 +65,7 @@ export class ParsedHTMLRewriter implements HTMLRewriter {
   // #onDocument = new Array<DocumentHandler>();
 
   public on(selector: string, handlers: ParsedElementHandler): HTMLRewriter {
-    push(this.#onMap, selector, handlers);
+    append(this.#onMap, selector, handlers);
     return this;
   }
 
@@ -98,23 +98,25 @@ export class ParsedHTMLRewriter implements HTMLRewriter {
         for (const elem of document.querySelectorAll(selector)) {
           for (const handler of handlers) {
             if (handler.element) {
-              push(elemMap, elem, handler.element.bind(handler));
+              append(elemMap, elem, handler.element.bind(handler));
             }
 
+            // FIXME: The `innerHTML` handler needs to run at the beginning of the next sibling node,
+            // after all the inner handlers have completed...
             if (handler.innerHTML) {
-              push(htmlMap, elem, handler.innerHTML.bind(handler));
+              append(htmlMap, elem, handler.innerHTML.bind(handler));
             }
 
             // Non-element handlers are odd, in the sense that they run for _any_ children
             if (handler.text) {
               for (const text of findTextNodes(elem, document)) {
-                push(textMap, text, handler.text.bind(handler))
+                append(textMap, text, handler.text.bind(handler))
               }
             }
 
             if (handler.comments) {
               for (const comm of findCommentNodes(elem, document)) {
-                push(commMap, comm, handler.comments.bind(handler))
+                append(commMap, comm, handler.comments.bind(handler))
               }
             }
           }
