@@ -49,21 +49,6 @@ export type ParsedElementHandler = ElementHandler & {
 
 /**
  * A DOM-based implementation of Cloudflare's `HTMLRewriter`.
- * 
- * Unlike the original, this implementation dumps the entire document in memory, 
- * parses it via `parseHTML` (provided by `linkedom`),
- * and runs selectors against this representation.
- * As a result, it is much slower and more memory intensive, and can't process streaming data.
- * 
- * However, it should run in most JS contexts (including Web Workers, Service Workers and Deno) without modification.
- * 
- * It is mainly intended for Workers development and allowing CF Workers to run in other JS contexts such as Deno..
- * 
- * TODO:
- * - Implement `onDocument` 
- * 
- * WANTED:
- * - A HTMLRewriter implementation using `lol-html` compiled to WebAssembly..
  */
 export class ParsedHTMLRewriter implements HTMLRewriter {
   #onMap = new Map<string, ParsedElementHandler[]>();
@@ -107,12 +92,12 @@ export class ParsedHTMLRewriter implements HTMLRewriter {
             }
 
             // The `innerHTML` handler needs to run at the beginning of the next sibling node,
-            // after all the inner handlers have completed...
+            // after all the inner handlers have completed:
             if (handler.innerHTML) {
               append(htmlMap, findNext(elem), [elem, handler.innerHTML.bind(handler)]);
             }
 
-            // Non-element handlers are odd, in the sense that they run for _any_ children
+            // Non-element handlers are odd, in the sense that they run for _any_ children, not just the immediate ones:
             if (handler.text) {
               for (const text of findTextNodes(elem, document)) {
                 append(textMap, text, handler.text.bind(handler))
@@ -129,18 +114,19 @@ export class ParsedHTMLRewriter implements HTMLRewriter {
       }
 
       // We'll then walk the DOM and run the registered handlers each time we encounter an "interesting" node.
-      // Because we've stored them in a hash map, and can retrieve them via object identity, this is now O(n)...
+      // Because we've stored them in a hash map, and can retrieve them via object identity:
       const walker = document.createTreeWalker(document, SHOW_ELEMENT | SHOW_TEXT | SHOW_COMMENT);
 
       // We need to walk the entire tree ahead of time,
-      // otherwise we'll miss elements that have been deleted by handlers.
-      // NOTE: Adding `null` at the end to handle edge case of `innerHTML` of the last element.
+      // otherwise the order might change based on added/deleted elements:
+      // We're also adding `null` at the end to handle the edge case of `innerHTML` of the last element.
       const nodes = [...treeWalkerToIter(walker), null];
 
       for (const node of nodes) {
-        for (const [originalElement, handler] of htmlMap.get(node) ?? []) {
-          await handler(originalElement.innerHTML);
+        for (const [prevElem, handler] of htmlMap.get(node) ?? []) {
+          await handler(prevElem.innerHTML);
         }
+
         if (isElement(node)) {
           const handlers = elemMap.get(node) ?? [];
           for (const handler of handlers) {
