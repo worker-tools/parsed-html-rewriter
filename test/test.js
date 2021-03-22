@@ -11,17 +11,13 @@ import { ParsedHTMLRewriter } from '../index.js';
     assert.ok(new Response())
     assert.ok(ReadableStream)
     assert.ok(new ReadableStream({}))
-    assert.ok(ParsedHTMLRewriter)
-    assert.ok(new ParsedHTMLRewriter())
-
-    // console.log(parseHTML(`<body id="foo" class="bar"></body>`).document.documentElement.outerHTML)
-    // console.log(new DOMParser().parseFromString(`<body id="foo" class="bar"></body>`, 'text/html').toString())
-
     assert.strictEqual(
       await new Response('<body></body>').text(),
       '<body></body>',
     );
 
+    assert.ok(ParsedHTMLRewriter)
+    assert.ok(new ParsedHTMLRewriter())
     assert.strictEqual(
       await new ParsedHTMLRewriter().transform(new Response('<body></body>')).text(),
       '<body></body>',
@@ -154,16 +150,50 @@ import { ParsedHTMLRewriter } from '../index.js';
         .text(),
       '<body><header>H</header><main>&lt;div&gt;D&lt;/div&gt;</main><footer>F</footer></body>',
     );
+
+    // Test innerHTML handler
+    let innerHTMLCalled = false;
     assert.strictEqual(
       await new ParsedHTMLRewriter()
         .on('main', { 
           element(el) { el.setInnerContent('<div>D</div>', { html: true }) },
-          innerHTML(html) { assert.strictEqual(html, '<div>D</div>') },
+          innerHTML(html) { 
+            innerHTMLCalled = true;
+            assert.strictEqual(html, '<div>D</div>');
+          },
         })
         .transform(new Response('<body><header>H</header><main>M</main><footer>F</footer></body>'))
         .text(),
       '<body><header>H</header><main><div>D</div></main><footer>F</footer></body>',
     );
+    assert.ok(innerHTMLCalled);
+
+    innerHTMLCalled = false;
+    await new ParsedHTMLRewriter()
+      .on('div[id]', { 
+        innerHTML(html) { 
+          innerHTMLCalled = true;
+          assert.strictEqual(html, 'D') 
+        },
+      })
+      .transform(new Response('<body><header>H</header><main>M</main><footer><div id="">D</div></footer></body>'))
+      .text()
+    assert.ok(innerHTMLCalled);
+
+    // innerHTML being called after inner handlers run:
+    innerHTMLCalled = false;
+    await new ParsedHTMLRewriter()
+      .on('main', { 
+        innerHTML(html) { 
+          innerHTMLCalled = true;
+          assert.strictEqual(html, '3') 
+        },
+      })
+      .on('main div[id="1"]', { element(el) { el.removeAndKeepContent() }})
+      .on('main div[id="2"]', { element(el) { el.removeAndKeepContent() }})
+      .transform(new Response('<body><main><div id="1"><div id="2">3</div></div></main></body>'))
+      .text()
+    assert.ok(innerHTMLCalled);
 
   } catch (err) {
     console.error(err)

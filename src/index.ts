@@ -38,6 +38,11 @@ function* findCommentNodes(el: Element, document: any): Iterable<Comment> {
     yield node as Comment;
 }
 
+function findNext(el: Node | null): Node | null {
+  while (el && !el.nextSibling) el = el.parentNode;
+  return el && el.nextSibling;
+}
+
 export type ParsedElementHandler = ElementHandler & {
   innerHTML?(html: string): void | Promise<void>;
 }
@@ -90,7 +95,7 @@ export class ParsedHTMLRewriter implements HTMLRewriter {
       // First, we'll build a map of all elements that are "interesting", based on the registered handlers.
       // We take advantage of existing DOM APIs:
       const elemMap = new Map<Element, ((el: Element) => Awaitable<void>)[]>();
-      const htmlMap = new Map<Node, [Element, ((html: string) => Awaitable<void>)][]>();
+      const htmlMap = new Map<Node | null, [Element, ((html: string) => Awaitable<void>)][]>();
       const textMap = new Map<Text, ((text: Text) => Awaitable<void>)[]>();
       const commMap = new Map<Comment, ((comment: Comment) => Awaitable<void>)[]>();
 
@@ -129,7 +134,8 @@ export class ParsedHTMLRewriter implements HTMLRewriter {
 
       // We need to walk the entire tree ahead of time,
       // otherwise we'll miss elements that have been deleted by handlers.
-      const nodes = [...treeWalkerToIter(walker)];
+      // NOTE: Adding `null` at the end to handle edge case of `innerHTML` of the last element.
+      const nodes = [...treeWalkerToIter(walker), null];
 
       for (const node of nodes) {
         for (const [originalElement, handler] of htmlMap.get(node) ?? []) {
@@ -163,9 +169,4 @@ export class ParsedHTMLRewriter implements HTMLRewriter {
       return new TextEncoder().encode(document.toString());
     })())), response);
   }
-}
-
-function findNext(el: Node | null): Node | null {
-  while (el && !el.nextSibling) el = el.parentNode;
-  return el && el.nextSibling;
 }
