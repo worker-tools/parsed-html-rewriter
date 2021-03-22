@@ -16,6 +16,9 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 12
+      - uses: webfactory/ssh-agent@v0.5.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - run: npm ci
       - run: npm test
 
@@ -28,6 +31,9 @@ jobs:
         with:
           node-version: 12
           registry-url: https://registry.npmjs.org/
+      - uses: webfactory/ssh-agent@v0.5.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - run: npm ci
       - run: npm publish
         env:
