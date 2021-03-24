@@ -59,5 +59,12 @@
   "bugs": {
     "url": "https://github.com/worker-tools/parsed-html-rewriter/issues"
   },
-  "homepage": "https://github.com/worker-tools/parsed-html-rewriter#readme"
+  "homepage": "https://github.com/worker-tools/parsed-html-rewriter#readme",
+  "keywords": [
+    "polyfill",
+    "html",
+    "dom",
+    "cloudflare-workers",
+    "html-rewriter"
+  ]
 }
