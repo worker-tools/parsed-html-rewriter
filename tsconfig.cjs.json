@@ -6,9 +6,9 @@
       "DOM",
       "DOM.Iterable"
     ],
-    "target": "ES2019",
+    "target": "ES2015",
     "moduleResolution": "Node",
-    "outDir": ".",
+    "outDir": "cjs",
     "types": [
       "@cloudflare/workers-types",
     ],
@@ -17,15 +17,12 @@
     "strict": true,
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "inlineSources": true,
+    "module": "CommonJS",
   },
   "include": [
     "typings/*.d.ts",
     "src/**/.ts",
     "src/*.ts"
   ],
-  "exclude": []
+  "exclude": [],
 }

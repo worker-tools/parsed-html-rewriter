@@ -3,15 +3,22 @@
   "version": "0.1.3",
   "description": "A DOM-based implementation of Cloudflare Worker's HTMLRewriter.",
   "type": "module",
-  "main": "index.js",
+  "main": "cjs/index.cjs",
   "module": "index.js",
   "types": "index.d.ts",
   "exports": {
-    ".": "./index.js",
-    "./polyfill": "./polyfill.js"
+    ".": {
+      "import": "./index.js",
+      "require": "./cjs/index.cjs"
+    },
+    "./polyfill": {
+      "import": "./polyfill.js",
+      "require": "./cjs/polyfill.cjs"
+    }
   },
   "files": [
     "src",
+    "cjs",
     "*.js*",
     "*.d.ts*"
   ],
@@ -20,9 +27,13 @@
   },
   "scripts": {
     "postinstall": "shx ls index.js >> /dev/null 2>&1 || npm run build",
-    "clean": "shx rm -f *.d.ts *.js *.js.map *.d.ts.map *.tgz",
-    "test": "npm run build && node test/test.js",
-    "build": "tsc -d",
+    "clean": "shx rm -rf cjs *.d.ts *.js *.js.map *.d.ts.map *.tgz",
+    "test": "npm run build:mjs && node test/test.js",
+    "build": "npm run build:mjs & npm run build:cjs & wait",
+    "build:mjs": "tsc -p tsconfig.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json && npm run sed && npm run mv",
+    "sed": "shx sed -i 's/\\.(.*)\\.js/\\.$1\\.cjs/g' cjs/*.js > /dev/null ",
+    "mv": "for f in cjs/*.js; do shx mv \"$f\" \"${f%.js}.cjs\"; done",
     "prepack": "npm run clean && npm run build"
   },
   "author": "Florian Klampfer <mail@qwtel.com> (https://qwtel.com/)",
@@ -31,7 +42,7 @@
     "@cloudflare/workers-types": "^2.2.1",
     "linkedom": "^0.5.6",
     "tslib": "^2.1.0",
-    "whatwg-stream-to-async-iter": "^0.3.0"
+    "whatwg-stream-to-async-iter": "^0.3.2"
   },
   "devDependencies": {
     "node-fetch-polyfill": "^2.0.6",
@@ -39,7 +50,7 @@
     "shx": "^0.3.3",
     "typed-array-utils": "^0.2.2",
     "typescript": "^4.2.3",
-    "web-streams-polyfill": "^1.2.2"
+    "web-streams-polyfill": "^1.3.2"
   },
   "repository": {
     "type": "git",
