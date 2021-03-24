@@ -5,7 +5,7 @@ import { concatBufferSources } from 'typed-array-utils';
 Object.assign(global, webStreams);
 Object.assign(global, fetch);
 
-class NonSuckingResponse extends Response {
+class FixedResponse extends Response {
   async text() {
     if (this._rawBody instanceof ReadableStream) {
       const r = this._rawBody.getReader();
@@ -22,4 +22,4 @@ class NonSuckingResponse extends Response {
   }
 }
 
-global.Response = NonSuckingResponse;
+global.Response = FixedResponse;
