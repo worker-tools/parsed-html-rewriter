@@ -12,6 +12,9 @@
     "types": [
       "@cloudflare/workers-types",
     ],
+    "paths": {
+      "perf_hooks": ["./src/perf_hooks.js"],
+    },
     "importHelpers": true,
     "experimentalDecorators": true,
     "strict": true,

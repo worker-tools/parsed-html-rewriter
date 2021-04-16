@@ -1,5 +1,6 @@
 node_modules
 cjs
+dist
 *.tgz
 /*.d.ts
 /*.js
