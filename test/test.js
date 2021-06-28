@@ -195,6 +195,49 @@ import { ParsedHTMLRewriter } from '../index.js';
       .text()
     assert.ok(innerHTMLCalled);
 
+    // Test onDocument handler
+    const documentHtmlText = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><!--outside--><head><title>T</title></head><body>B</body></html>';
+    let calledDocumentDoctype = false
+    let calledDocumentComm = false;
+    let calledDocumentText = false;
+    let calledDocumentEnd = false;
+    const documentTexts = ['T', '', 'B', ''];
+    const newDocument = await new ParsedHTMLRewriter()
+      .onDocument({
+        doctype(doctype) {
+          calledDocumentDoctype = true;
+          assert.ok(doctype);
+          assert.strictEqual(doctype.name, 'html');
+          assert.strictEqual(doctype.publicId, '-//W3C//DTD HTML 4.01//EN');
+          assert.strictEqual(doctype.systemId, 'http://www.w3.org/TR/html4/strict.dtd');
+        },
+        comments(comm) {
+          calledDocumentComm = true;
+          assert.ok(comm);
+          assert.strictEqual(comm.text, "outside");
+          comm.before("<!--another-->", { html: true });
+        },
+        text(span) {
+          calledDocumentText = true;
+          assert.ok(span);
+          assert.ok('lastInTextNode' in span);
+          assert.strictEqual(span.text, documentTexts.shift());
+        },
+        end(end) {
+          calledDocumentEnd = true;
+          assert.ok(end);
+          end.append("<!--after-->", { html: true });
+        }
+      })
+      .transform(new Response(documentHtmlText))
+      .text();
+
+    assert.ok(calledDocumentDoctype);
+    assert.ok(calledDocumentComm);
+    assert.ok(calledDocumentText);
+    assert.ok(calledDocumentEnd);
+    assert.strictEqual(newDocument, '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><html><!--another--><!--outside--><head><title>T</title></head><body>B</body></html><!--after-->');
+
   } catch (err) {
     console.error(err)
   }

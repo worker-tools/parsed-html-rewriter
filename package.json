@@ -42,7 +42,7 @@
   "license": "MIT",
   "dependencies": {
     "@cloudflare/workers-types": "^2.2.1",
-    "linkedom": "^0.7.3",
+    "linkedom": "^0.9.7",
     "tslib": "^2.2.0",
     "whatwg-stream-to-async-iter": "^0.3.2"
   },
