@@ -21,13 +21,13 @@ export function* treeWalkerToIter(walker: TreeWalker): IterableIterator<Node> {
 type Content = string;
 
 /** Fragment form string function that works with linkedom. */
-function fragmentFromString(document: HTMLDocument, html: string) {
+function fragmentFromString(document: Document, html: string) {
   const temp = document.createElement('template');
   temp.innerHTML = html;
   return temp.content;
 }
 
-function replace(document: HTMLDocument, node: Element | Text | Comment | null, content: string, opts?: ContentOptions) {
+function replace(document: Document, node: Element | Text | Comment | null, content: string, opts?: ContentOptions) {
   node?.replaceWith(...opts?.html
     ? fragmentFromString(document, content).childNodes // depends on DOM.Iterable
     : [content]);
@@ -35,8 +35,8 @@ function replace(document: HTMLDocument, node: Element | Text | Comment | null, 
 
 export class ParsedHTMLRewriterNode {
   #node: Element | Text | Comment | null;
-  #doc: HTMLDocument;
-  constructor(node: Element | Text | Comment | null, document: HTMLDocument) {
+  #doc: Document;
+  constructor(node: Element | Text | Comment | null, document: Document) {
     this.#node = node;
     this.#doc = document;
   }
@@ -71,7 +71,7 @@ export class ParsedHTMLRewriterNode {
 export class ParsedHTMLRewriterElement extends ParsedHTMLRewriterNode {
   #node: Element;
 
-  constructor(node: Element, document: HTMLDocument) {
+  constructor(node: Element, document: Document) {
     super(node, document)
     this.#node = node;
   }
@@ -123,7 +123,7 @@ export class ParsedHTMLRewriterText extends ParsedHTMLRewriterNode {
   #text: Text | null;
   #done: boolean;
 
-  constructor(text: Text | null, document: HTMLDocument) {
+  constructor(text: Text | null, document: Document) {
     super(text, document);
     this.#text = text;
     this.#done = text === null;
@@ -134,7 +134,7 @@ export class ParsedHTMLRewriterText extends ParsedHTMLRewriterNode {
 
 export class ParsedHTMLRewriterComment extends ParsedHTMLRewriterNode {
   #comm: Comment;
-  constructor(comm: Comment, document: HTMLDocument) {
+  constructor(comm: Comment, document: Document) {
     super(comm, document);
     this.#comm = comm;
   }
@@ -154,9 +154,9 @@ export class ParsedHTMLRewriterDocumentType {
 }
 
 export class ParsedHTMLRewriterEnd {
-  #doc: HTMLDocument;
+  #doc: Document;
 
-  constructor(document: HTMLDocument) {
+  constructor(document: Document) {
     this.#doc = document;
   }
 
