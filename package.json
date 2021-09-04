@@ -41,19 +41,19 @@
   "author": "Florian Klampfer <mail@qwtel.com> (https://qwtel.com/)",
   "license": "MIT",
   "dependencies": {
-    "@cloudflare/workers-types": "^2.2.1",
-    "linkedom": "^0.9.7",
-    "tslib": "^2.2.0",
-    "whatwg-stream-to-async-iter": "^0.3.2"
+    "@cloudflare/workers-types": "^2.2.2",
+    "linkedom": "^0.11.2",
+    "tslib": "^2.3.1",
+    "whatwg-stream-to-async-iter": "^0.3.3"
   },
   "devDependencies": {
-    "esbuild": "^0.11.11",
+    "esbuild": "^0.12.25",
     "node-fetch-polyfill": "^2.0.6",
     "node-web-streams": "^0.2.2",
     "shx": "^0.3.3",
     "typed-array-utils": "^0.2.2",
-    "typescript": "^4.2.4",
-    "web-streams-polyfill": "^1.3.2"
+    "typescript": "^4.4.2",
+    "web-streams-polyfill": "^3.1.0"
   },
   "repository": {
     "type": "git",
