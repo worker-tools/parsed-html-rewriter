@@ -27,6 +27,12 @@ function fragmentFromString(document: HTMLDocument, html: string) {
   return temp.content;
 }
 
+function replace(document: HTMLDocument, node: Element | Text | Comment | null, content: string, opts?: ContentOptions) {
+  node?.replaceWith(...opts?.html
+    ? fragmentFromString(document, content).childNodes // depends on DOM.Iterable
+    : [content]);
+}
+
 export class ParsedHTMLRewriterNode {
   #node: Element | Text | Comment | null;
   #doc: HTMLDocument;
@@ -37,28 +43,22 @@ export class ParsedHTMLRewriterNode {
 
   get removed() { return !this.#doc.contains(this.#node) }
 
-  #replace = (node: Element | Text | Comment | null, content: string, opts?: ContentOptions) => {
-    node?.replaceWith(...opts?.html
-      ? fragmentFromString(this.#doc, content).childNodes // depends on DOM.Iterable
-      : [content]);
-  }
-
   before(content: Content, opts?: ContentOptions): this {
     const before = this.#doc.createComment('');
     this.#node?.parentElement?.insertBefore(before, this.#node)
-    this.#replace(before, content, opts);
+    replace(this.#doc, before, content, opts);
     return this;
   }
 
   after(content: Content, opts?: ContentOptions): this {
     const after = this.#doc.createComment('');
     this.#node?.parentElement?.insertBefore(after, this.#node.nextSibling)
-    this.#replace(after, content, opts);
+    replace(this.#doc, after, content, opts);
     return this;
   }
 
   replace(content: Content, opts?: ContentOptions): this {
-    this.#replace(this.#node, content, opts);
+    replace(this.#doc, this.#node, content, opts);
     return this;
   }
 
@@ -140,6 +140,32 @@ export class ParsedHTMLRewriterComment extends ParsedHTMLRewriterNode {
   }
   get text() { return this.#comm.textContent ?? '' }
   set text(value: string) { this.#comm.textContent = value }
+}
+
+export class ParsedHTMLRewriterDocumentType {
+  #doctype: DocumentType;
+
+  constructor(doctype: DocumentType) {
+    this.#doctype = doctype;
+  }
+  get name() { return this.#doctype.name }
+  get publicId() { return this.#doctype.publicId }
+  get systemId() { return this.#doctype.systemId }
+}
+
+export class ParsedHTMLRewriterEnd {
+  #doc: HTMLDocument;
+
+  constructor(document: HTMLDocument) {
+    this.#doc = document;
+  }
+
+  append(content: Content, opts?: ContentOptions): this {
+    const after = this.#doc.createComment('');
+    this.#doc.insertBefore(after, null);
+    replace(this.#doc, after, content, opts);
+    return this;
+  }
 }
 
 // function* ancestors(el: Node) {

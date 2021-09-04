@@ -4,6 +4,8 @@ import {
   ParsedHTMLRewriterElement,
   ParsedHTMLRewriterText,
   ParsedHTMLRewriterComment,
+  ParsedHTMLRewriterDocumentType,
+  ParsedHTMLRewriterEnd,
   promiseToAsyncIterable,
   append,
   treeWalkerToIter,
@@ -52,17 +54,16 @@ export type ParsedElementHandler = ElementHandler & {
  */
 export class ParsedHTMLRewriter implements HTMLRewriter {
   #onMap = new Map<string, ParsedElementHandler[]>();
-  // #onDocument = new Array<DocumentHandler>();
+  #onDocument = new Array<DocumentHandler>();
 
   public on(selector: string, handlers: ParsedElementHandler): HTMLRewriter {
     append(this.#onMap, selector, handlers);
     return this;
   }
 
-  public onDocument(_handlers: DocumentHandler): HTMLRewriter {
-    // this.#onDocument.push(handlers);
-    // return this;
-    throw Error('Method not implemented.');
+  public onDocument(handlers: DocumentHandler): HTMLRewriter {
+    this.#onDocument.push(handlers);
+    return this;
   }
 
   public transform(response: Response): Response {
@@ -113,6 +114,14 @@ export class ParsedHTMLRewriter implements HTMLRewriter {
         }
       }
 
+      // Handle document doctype before everything else
+      if(document.doctype) {
+        const doctype = new ParsedHTMLRewriterDocumentType(document.doctype);
+        for (const handler of this.#onDocument) {
+          await handler.doctype?.(doctype);
+        }
+      }
+
       // We'll then walk the DOM and run the registered handlers each time we encounter an "interesting" node.
       // Because we've stored them in a hash map, and can retrieve them via object identity:
       const walker = document.createTreeWalker(document, SHOW_ELEMENT | SHOW_TEXT | SHOW_COMMENT);
@@ -135,21 +144,39 @@ export class ParsedHTMLRewriter implements HTMLRewriter {
         }
         else if (isText(node)) {
           const handlers = textMap.get(node) ?? [];
+          const text = new ParsedHTMLRewriterText(node, document) as unknown as Text;
           for (const handler of handlers) {
-            await handler(new ParsedHTMLRewriterText(node, document) as unknown as Text);
+            await handler(text);
+          }
+          for (const handler of this.#onDocument) {
+            await handler.text?.(text);
           }
           if (!isText(node.nextSibling)) {
+            const textLast = new ParsedHTMLRewriterText(null, document) as unknown as Text;
             for (const handler of handlers) {
-              await handler(new ParsedHTMLRewriterText(null, document) as unknown as Text);
+              await handler(textLast);
+            }
+            for (const handler of this.#onDocument) {
+              await handler.text?.(textLast);
             }
           }
         }
         else if (isComment(node)) {
           const handlers = commMap.get(node) ?? [];
+          const comment = new ParsedHTMLRewriterComment(node, document) as unknown as Comment;
           for (const handler of handlers) {
-            await handler(new ParsedHTMLRewriterComment(node, document) as unknown as Text);
+            await handler(comment);
+          }
+          for (const handler of this.#onDocument) {
+            await handler.comments?.(comment);
           }
         }
+      }
+
+      // Handle document end after everything else
+      const end = new ParsedHTMLRewriterEnd(document);
+      for (const handler of this.#onDocument) {
+        await handler.end?.(end);
       }
 
       return new TextEncoder().encode(document.toString());
