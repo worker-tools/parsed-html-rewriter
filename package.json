@@ -42,18 +42,18 @@
   "license": "MIT",
   "dependencies": {
     "@cloudflare/workers-types": "^2.2.2",
-    "linkedom": "^0.11.2",
+    "linkedom": "^0.13.0",
     "tslib": "^2.3.1",
     "whatwg-stream-to-async-iter": "^0.3.3"
   },
   "devDependencies": {
-    "esbuild": "^0.12.25",
+    "esbuild": "^0.14.2",
     "node-fetch-polyfill": "^2.0.6",
     "node-web-streams": "^0.2.2",
     "shx": "^0.3.3",
     "typed-array-utils": "^0.2.2",
-    "typescript": "^4.4.2",
-    "web-streams-polyfill": "^3.1.0"
+    "typescript": "^4.5.2",
+    "web-streams-polyfill": "^3.2.0"
   },
   "repository": {
     "type": "git",
