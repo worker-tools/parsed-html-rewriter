@@ -27,8 +27,7 @@
     "access": "public"
   },
   "scripts": {
-    "postinstall": "shx ls index.js >> /dev/null 2>&1 || npm run build",
-    "clean": "shx rm -rf cjs *.d.ts *.js *.js.map *.d.ts.map *.tgz",
+    "clean": "shx rm -rf cjs dist *.d.ts *.js *.js.map *.d.ts.map *.tgz",
     "test": "npm run build:mjs && node test/test.js",
     "build": "npm run build:mjs & npm run build:cjs & npm run build:dist & wait",
     "build:mjs": "tsc -p tsconfig.json",
