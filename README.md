@@ -1,11 +1,13 @@
 # Parsed HTML Rewriter
 A DOM-based implementation of [Cloudflare Worker's `HTMLRewriter`](https://developers.cloudflare.com/workers/runtime-apis/html-rewriter).
 
+___UPDATE: While this module works just fine, I've made [a new verison](https://github.com/worker-tools/html-rewriter) that is WASM/streaming based for much better performance.___
+
 Unlike the original, this implementation parses the entire DOM (provided by [`linkedom`](https://github.com/WebReflection/linkedom)),
 and runs selectors against this representation. As a result, it is slower, more memory intensive, and can't process streaming data.
 
 Note that this approach was chosen to quickly implement the functionality of `HTMLRewriter`, as there is currently no JS implementation available.
-A better implementation would replicate the streaming approach of [`lol-html`](https://github.com/cloudflare/lol-html), or even use a WebAssembly version of it.
+A better implementation would replicate the streaming approach of [`lol-html`](https://github.com/cloudflare/lol-html), or even use a WebAssembly version of it. _Update: [Now available here](https://github.com/worker-tools/html-rewriter)_.
 
 However, this implementation should run in most JS contexts (including Web Workers, Service Workers and Deno) without modification and handle many, if not most, use cases of `HTMLRewriter`. 
 It should be good enough for testing and offline Workers development.
